@@ -1,0 +1,4 @@
+module shell.switcher
+singleton Switcher 1.0 Switcher.qml
+SwitcherWindow 1.0 SwitcherWindow.qml
+SwitcherTile 1.0 SwitcherTile.qml

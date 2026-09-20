@@ -1,0 +1,127 @@
+// -*- mode: jsonc -*-
+{
+    "layer": "top", // Waybar at top layer
+    "height": 35, // Waybar height (to be removed for auto height)
+    "width": 1440, // Waybar width
+    "mode": "dock",
+    "modules-left": [
+        "hyprland/workspaces",
+        "tray",
+        "mpris",
+        "custom/exit"
+    ],
+    "modules-center": [
+        "hyprland/window"
+    ],
+    "modules-right": [
+        "network",
+        "wireplumber",
+        "clock",
+        "custom/power"
+    ],
+    // Modules configuration
+    "hyprland/workspaces": {
+        "format": "{name}",
+        "tooltip": false,
+        "on-scroll-down": "hyprctl dispatch 'hl.dsp.focus({workspace=\"m+1\"})'",
+        "on-scroll-up": "hyprctl dispatch 'hl.dsp.focus({workspace=\"m-1\"})'",
+        "persistent-workspaces": {
+            "DP-1": [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "DP-2": [
+                6,
+                7,
+                8,
+                9,
+                10
+            ],
+            "HDMI-A-1": [
+                11,
+                12,
+                13
+            ]
+        }
+    },
+    "hyprland/window": {
+        "max-length": 60,
+        "separate-outputs": false
+    },
+    "custom/power": {
+        "format": "{}",
+        "exec": "~/.local/bin/hypridle_inhibit_check.sh",
+        "signal": 10,
+        "tooltip": false,
+        "menu": "on-click",
+        "menu-file": "~/.config/waybar/power_menu.xml",
+        "menu-actions": {
+            "shutdown": "poweroff",
+            "reboot": "reboot",
+            "suspend": "systemctl suspend"
+        },
+        "on-click-right": "~/.local/bin/hypridle_inhibit.sh"
+    },
+    "custom/exit": {
+        "format": "X",
+        "tooltip": false,
+        "on-click": "hyprctl dispatch workspace 5 && hyprctl dispatch workspace 10"
+    },
+    "tray": {
+        "spacing": 10
+    },
+    "mpris": {
+        "format": "⏸",
+        "format-paused": "▶",
+        "tooltip-format": "{dynamic}",
+        "interval": 1
+    },
+    "clock": {
+        "interval": 1,
+        "cursor": 0,
+        "format": "{:%T|%d.%m.%y}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "year",
+            "mode-mon-col": 3,
+            "weeks-pos": "right",
+            "on-scroll": 1,
+            "format": {
+                "months": "<span color='#32929F'><b>{}</b></span>",
+                "days": "<span color='#b0e0e6'><b>{}</b></span>",
+                "weeks": "<span color='#ECF7F9'><b>W{}</b></span>",
+                "weekdays": "<span color='#60C0CD'><b>{}</b></span>",
+                "today": "<span color='#3DC24D'><b><u>{}</u></b></span>"
+            }
+        },
+        "actions": {
+            "on-click-right": "mode",
+            "on-scroll-up": "shift_up",
+            "on-scroll-down": "shift_down"
+        }
+    },
+    "wireplumber": {
+        "format": "{volume}% {icon}",
+        "format-bluetooth": "{volume}% {icon}",
+        "format-bluetooth-muted": " {icon}",
+        "format-muted": "",
+        "format-icons": {
+            "default": [
+                "",
+                "",
+                ""
+            ]
+        },
+        "on-click-middle": "wpctl set-mute 48 toggle",
+        "cursor": 0,
+        "tooltip": true
+    },
+    "network": {
+        "format": "Online",
+        "format-disconnected": "Disconnected",
+        "tooltip": false
+    }
+}

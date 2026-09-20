@@ -1,0 +1,3 @@
+module shell.osd
+singleton Osd 1.0 Osd.qml
+VolumeOsd 1.0 VolumeOsd.qml

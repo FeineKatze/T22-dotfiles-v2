@@ -1,0 +1,4 @@
+module shell.notes
+singleton Notes 1.0 Notes.qml
+NotesWindow 1.0 NotesWindow.qml
+NoteTab 1.0 NoteTab.qml

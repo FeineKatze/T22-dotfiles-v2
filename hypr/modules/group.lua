@@ -1,0 +1,5 @@
+hl.config({
+	group = {
+		groupbar = {},
+	},
+})

@@ -1,0 +1,3 @@
+module shell.polkit
+singleton Polkit 1.0 Polkit.qml
+PolkitDialog 1.0 PolkitDialog.qml

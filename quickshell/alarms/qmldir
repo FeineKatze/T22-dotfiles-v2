@@ -1,0 +1,4 @@
+module shell.alarms
+singleton Alarms 1.0 Alarms.qml
+AlarmsCenter 1.0 AlarmsCenter.qml
+SettingsToggleRow 1.0 SettingsToggleRow.qml

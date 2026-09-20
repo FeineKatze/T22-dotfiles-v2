@@ -1,0 +1,10 @@
+# This file contains fish universal variable definitions.
+# VERSION: 3.0
+SETUVAR --export LIBVIRT_DEFAULT_URI:qemu\x3a///system
+SETUVAR --export SSH_AGENT_PID:295881
+SETUVAR --export SSH_AUTH_SOCK:/home/christopher/\x2ekeychain/g_fxSV4X\x2es
+SETUVAR __fish_initialized:4300
+SETUVAR _fisher_j4hongir_2F_tempo_files:\x7e/\x2econfig/fish/functions/tempo\x2efish\x1e\x7e/\x2econfig/fish/conf\x2ed/tempo\x2efish\x1e\x7e/\x2econfig/fish/completions/tempo\x2efish
+SETUVAR _fisher_plugins:j4hongir/tempo
+SETUVAR _fisher_upgraded_to_4_4:\x1d
+SETUVAR fish_user_paths:/home/christopher/Projects/claude/ytui\x1e/home/christopher/\x2elocal/bin

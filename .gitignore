@@ -1,0 +1,23 @@
+# Whitelist-only: ignore everything by default, then explicitly
+# un-ignore just the configs worth tracking.
+/*
+
+!/.gitignore
+!/dunst
+!/fish
+!/fuzzel
+!/hypr
+!/kitty
+!/MangoHud
+!/mpv
+!/nvim
+!/pipewire
+!/quickshell
+!/waybar
+!/yazi
+!/btop
+!/git
+!/mimeapps.list
+
+# quickshell writes this as a runtime symlink into /run/user/.../vfs/...
+/quickshell/.qmlls.ini

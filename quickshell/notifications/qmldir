@@ -1,0 +1,6 @@
+module shell.notifications
+singleton Notifications 1.0 Notifications.qml
+NotificationItem 1.0 NotificationItem.qml
+Popups 1.0 Popups.qml
+Center 1.0 Center.qml
+HotCorner 1.0 HotCorner.qml

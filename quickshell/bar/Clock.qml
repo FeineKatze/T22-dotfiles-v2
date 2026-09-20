@@ -58,10 +58,24 @@ Rectangle {
     readonly property color sundayColor: Qt.hsla(0.0, 0.50, 0.60, 1.0)
     readonly property color saturdayColor: Qt.hsla(0.0, 0.30, 0.60, 1.0)
 
-    // Feiertage/Ferien grid highlighting colors, taken from the Samsung
-    // Calendar app's own palette
-    readonly property color feiertagColor: "#086535"
-    readonly property color ferienColor: "#9D1248"
+    // filter palette for the Upcoming list's toggle dots - [0]/[1] are the
+    // existing Feiertage/Ferien grid highlighting colors (taken from the
+    // Samsung Calendar app's own palette), [2]-[5] are unassigned
+    // placeholders reserved for future event categories (eg. once the
+    // appointments editor lets you pick a color)
+    readonly property var filterColors: ["#086535", "#9D1248", "#3B82F6", "#F59E0B", "#8B5CF6", "#14B8A6"]
+
+    // per-color on/off state for the Upcoming list filter dots, same
+    // indices as filterColors - all on by default. Reassigned wholesale
+    // (not mutated in place) since QML property bindings don't pick up
+    // in-place array mutation
+    property var filterActive: [true, true, true, true, true, true]
+
+    function toggleFilter(i) {
+        let arr = rec.filterActive.slice();
+        arr[i] = !arr[i];
+        rec.filterActive = arr;
+    }
 
     // per-day custom colors, keyed by "YYYY-MM-DD" - empty until the
     // day-coloring popup (not built yet) starts writing to this
@@ -78,12 +92,12 @@ Rectangle {
         if (Alarms.showGermanHolidays) {
             const h = Alarms.germanHolidays.find(e => rec.dateInRange(dateKey, e));
             if (h)
-                return h.color ?? rec.feiertagColor;
+                return h.color ?? rec.filterColors[0];
         }
         if (Alarms.showGermanSchoolHolidays) {
             const f = Alarms.germanSchoolHolidays.find(e => rec.dateInRange(dateKey, e));
             if (f)
-                return f.color ?? rec.ferienColor;
+                return f.color ?? rec.filterColors[1];
         }
         return null;
     }
@@ -254,14 +268,21 @@ Rectangle {
             combined = combined.concat(Alarms.appointments);
         if (Alarms.showGermanHolidays)
             combined = combined.concat(Alarms.germanHolidays.map(e => Object.assign({}, e, {
-                    color: e.color ?? rec.feiertagColor
+                    color: e.color ?? rec.filterColors[0]
                 })));
         if (Alarms.showGermanSchoolHolidays)
             combined = combined.concat(Alarms.germanSchoolHolidays.map(e => Object.assign({}, e, {
-                    color: e.color ?? rec.ferienColor
+                    color: e.color ?? rec.filterColors[1]
                 })));
 
+        // filter dots: an event whose color matches one of the 6 filter
+        // slots is hidden while that slot is toggled off; an event with an
+        // unrecognized color (eg. a future custom appointment color not in
+        // the palette) is unaffected since there's no dot for it
         const list = combined.filter(e => {
+            const colorIdx = rec.filterColors.indexOf(e.color);
+            if (colorIdx !== -1 && !rec.filterActive[colorIdx])
+                return false;
             const endDate = e.endDate ?? e.startDate;
             const endTime = e.endTime ?? "23:59";
             return new Date(endDate + "T" + endTime + ":00").getTime() >= nowMs;
@@ -473,19 +494,82 @@ Rectangle {
                     visible: rec.calendarMode === "upcoming"
                     spacing: 4
 
-                    Text {
+                    // "Upcoming" flanked by 3 filter dots on each side (one
+                    // per filterColors slot) - click to toggle that color's
+                    // events on/off in the list below. Filled = on, hollow
+                    // (border only) = off. Sized to the header text's own
+                    // line height so they read as inline punctuation, not
+                    // separate UI
+                    RowLayout {
                         Layout.alignment: Qt.AlignHCenter
                         // matches monthTitle's height so the header doesn't
                         // jump size when switching pages
                         Layout.preferredHeight: monthTitle.height
-                        text: "Upcoming"
-                        color: Theme.textColor
-                        style: Theme.style
-                        styleColor: Theme.styleColor
-                        font {
-                            family: Theme.fontFamily
-                            pointSize: Theme.pointSize
-                            bold: true
+                        spacing: 4
+
+                        Repeater {
+                            model: 3
+
+                            Rectangle {
+                                id: filterDotLeft
+                                required property int index
+
+                                readonly property int colorIndex: index
+                                readonly property bool active: rec.filterActive[colorIndex]
+
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: upcomingTitleText.implicitHeight - 5
+                                implicitHeight: upcomingTitleText.implicitHeight - 5
+                                radius: width / 2
+                                color: active ? rec.filterColors[colorIndex] : "transparent"
+                                border.color: rec.filterColors[colorIndex]
+                                border.width: 1.5
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: rec.toggleFilter(filterDotLeft.colorIndex)
+                                }
+                            }
+                        }
+
+                        Text {
+                            id: upcomingTitleText
+                            text: "Upcoming"
+                            color: Theme.textColor
+                            style: Theme.style
+                            styleColor: Theme.styleColor
+                            font {
+                                family: Theme.fontFamily
+                                pointSize: Theme.pointSize
+                                bold: true
+                            }
+                        }
+
+                        Repeater {
+                            model: 3
+
+                            Rectangle {
+                                id: filterDotRight
+                                required property int index
+
+                                readonly property int colorIndex: index + 3
+                                readonly property bool active: rec.filterActive[colorIndex]
+
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitWidth: upcomingTitleText.implicitHeight - 5
+                                implicitHeight: upcomingTitleText.implicitHeight - 5
+                                radius: width / 2
+                                color: active ? rec.filterColors[colorIndex] : "transparent"
+                                border.color: rec.filterColors[colorIndex]
+                                border.width: 1.5
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: rec.toggleFilter(filterDotRight.colorIndex)
+                                }
+                            }
                         }
                     }
 
@@ -567,15 +651,66 @@ Rectangle {
                                         }
                                     }
 
-                                    Text {
+                                    // name only - the date line above stays
+                                    // put. Elided/static normally; hovering
+                                    // it marquees the full text instead
+                                    Item {
+                                        id: nameContainer
                                         Layout.fillWidth: true
                                         Layout.leftMargin: 10
-                                        elide: Text.ElideRight
-                                        text: eventBlock.modelData.name
-                                        color: Theme.textColor
-                                        font {
-                                            family: Theme.fontFamily
-                                            pointSize: Theme.pointSize - 3
+                                        implicitHeight: nameText.implicitHeight
+                                        clip: true
+
+                                        HoverHandler {
+                                            id: nameHover
+                                        }
+
+                                        Text {
+                                            id: nameText
+
+                                            readonly property real overflow: Math.max(0, implicitWidth - nameContainer.width)
+                                            property real marqueeX: 0
+
+                                            width: nameHover.hovered ? implicitWidth : nameContainer.width
+                                            x: (nameHover.hovered && overflow > 0) ? marqueeX : 0
+                                            elide: Text.ElideRight
+                                            text: eventBlock.modelData.name
+                                            color: Theme.textColor
+                                            font {
+                                                family: Theme.fontFamily
+                                                pointSize: Theme.pointSize - 3
+                                            }
+
+                                            SequentialAnimation {
+                                                running: nameHover.hovered && nameText.overflow > 0
+                                                loops: Animation.Infinite
+
+                                                onRunningChanged: if (!running)
+                                                    nameText.marqueeX = 0
+
+                                                PauseAnimation {
+                                                    duration: 500
+                                                }
+                                                NumberAnimation {
+                                                    target: nameText
+                                                    property: "marqueeX"
+                                                    from: 0
+                                                    to: -nameText.overflow
+                                                    duration: Math.max(800, nameText.overflow * 30)
+                                                    easing.type: Easing.Linear
+                                                }
+                                                PauseAnimation {
+                                                    duration: 500
+                                                }
+                                                NumberAnimation {
+                                                    target: nameText
+                                                    property: "marqueeX"
+                                                    from: -nameText.overflow
+                                                    to: 0
+                                                    duration: Math.max(800, nameText.overflow * 30)
+                                                    easing.type: Easing.Linear
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -603,6 +738,7 @@ Rectangle {
                     }
 
                     GridLayout {
+                        id: yearGrid
                         columns: 3
                         rowSpacing: 8
                         columnSpacing: 12
@@ -683,7 +819,9 @@ Rectangle {
                 Item {
                     id: hoverNameContainer
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredWidth: monthGrid.implicitWidth
+                    // year view is a lot wider (3 mini-month columns) than
+                    // the month grid, so give it the extra room there
+                    Layout.preferredWidth: rec.calendarMode === "year" ? yearGrid.implicitWidth : monthGrid.implicitWidth
                     implicitHeight: hoverNameText.implicitHeight
                     clip: true
 

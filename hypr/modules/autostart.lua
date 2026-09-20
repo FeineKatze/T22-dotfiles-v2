@@ -5,8 +5,6 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Autostart/
 
 hl.on("hyprland.start", function()
-	-- hl.exec_cmd("systemctl --user start hyprpolkitagent")
-	-- hl.exec_cmd("/usr/bin/dunst")
 	hl.exec_cmd("qs")
 	hl.exec_cmd("hyprpaper")
 	hl.exec_cmd("floorp")
@@ -19,8 +17,5 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd(
 		"systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user start hyprland-session.target"
 	)
-	hl.exec_cmd("swayosd-server")
-	hl.exec_cmd("gsr-ui")
 	-- hl.exec_cmd("easyeffects -w")
-	hl.exec_cmd("~/.local/bin/restore_workspace_layouts.sh")
 end)

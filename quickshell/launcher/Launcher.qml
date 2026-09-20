@@ -20,6 +20,15 @@ QtObject {
     readonly property var modes: ["search", "power", "pinned", "stash"]
     property string mode: "search"
 
+    // icon for each mode's side-tab indicator (LauncherWindow.qml/ModeTab.qml) -
+    // purely informative, no other behavior
+    readonly property var modeGlyphs: ({
+            search: String.fromCodePoint(0xF0349), // md-magnify
+            power: String.fromCodePoint(0xF0425), // md-power
+            pinned: String.fromCodePoint(0xF0931), // md-pin_outline
+            stash: String.fromCodePoint(0xF120E) // md-archive_outline
+        })
+
     // false = the compact single/capped-row app preview; true = the full
     // scrollable grid (Down from the top row expands, Up from the top row
     // collapses back) - only meaningful for plain app search/browse, not the

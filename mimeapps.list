@@ -27,6 +27,7 @@ image/jpeg=feh.desktop
 image/jpg=feh.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 text/plain=nvim-terminal.desktop
+x-scheme-handler/proton-inbox=proton-mail.desktop
 
 [Added Associations]
 x-scheme-handler/http=userapp-Floorp-9HWJK3.desktop;
@@ -39,3 +40,4 @@ application/x-extension-shtml=userapp-Floorp-9HWJK3.desktop;
 application/xhtml+xml=userapp-Floorp-9HWJK3.desktop;
 application/x-extension-xhtml=userapp-Floorp-9HWJK3.desktop;
 application/x-extension-xht=userapp-Floorp-9HWJK3.desktop;
+x-scheme-handler/proton-inbox=proton-mail.desktop;

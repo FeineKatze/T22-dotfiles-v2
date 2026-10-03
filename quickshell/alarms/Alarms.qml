@@ -20,6 +20,18 @@ QtObject {
     // tooltip page already reads it.
     property var appointments: []
 
+    // set via the Upcoming list's right-click-to-edit hook
+    // (bar/Clock.qml), appointments only (not the read-only holiday
+    // lists) - captures which appointment to edit and switches to the
+    // Termine tab. Just the entry point for now; the actual edit UI comes
+    // with the appointments editor
+    property var editingAppointmentId: null
+
+    function editAppointment(id) {
+        root.editingAppointmentId = id;
+        root.centerMode = "appointments";
+    }
+
     // same shape as appointments - Bavarian public holidays (Feiertage) and
     // school holidays (Ferien), loaded from plain JSON files (converted
     // once from feiertage-deutschland.de / feiertage-api.de ICS/API data -

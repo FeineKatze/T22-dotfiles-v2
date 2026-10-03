@@ -6,8 +6,8 @@ import Quickshell.Hyprland
 
 // Floating notes window state/logic - two independent, open-ended lists of
 // "files": plain-text notes and checklists. Each list has its own active
-// slot index, switched via Ctrl+1-9 / Ctrl+Left/Right / click; Tab flips
-// between the two modes (matches Launcher.cycleMode's Tab convention).
+// slot index, switched via Ctrl+1-9 / Ctrl+Left/Right / click / Tab
+// (wrapping); Shift+Tab flips between the two modes.
 QtObject {
     id: root
 
@@ -84,6 +84,13 @@ QtObject {
 
     function nextSlot() {
         root.setActiveIndex(Math.min(root.currentNotes.length - 1, root.activeIndex + 1));
+    }
+
+    // Tab's own note-switching, wrapping past the last slot back to the
+    // first (unlike nextSlot/Ctrl+Right, which clamps)
+    function cycleSlot() {
+        const i = (root.activeIndex + 1) % root.currentNotes.length;
+        root.setActiveIndex(i);
     }
 
     // Ctrl+<n> - 1-based, no-op if that slot doesn't exist
@@ -238,8 +245,15 @@ QtObject {
             root.close();
             return true;
         }
-        if (key === Qt.Key_Tab && !ctrl) {
+        const shift = (modifiers & Qt.ShiftModifier) !== 0;
+        // Shift+Tab commonly arrives as Key_Backtab instead of Key_Tab +
+        // ShiftModifier (a Qt focus-chain quirk), so check both forms
+        if (!ctrl && (key === Qt.Key_Backtab || (key === Qt.Key_Tab && shift))) {
             root.cycleMode();
+            return true;
+        }
+        if (!ctrl && key === Qt.Key_Tab && !shift) {
+            root.cycleSlot();
             return true;
         }
         if (ctrl && key === Qt.Key_N) {

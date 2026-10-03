@@ -9,8 +9,12 @@ Rectangle {
 
     required property var entry
     required property int index
+    // set by LauncherWindow when this tile's Repeater isn't the only one
+    // sharing Launcher.selectedIndex (eg. pinned search matches appended
+    // after the app grid) - 0 leaves plain single-grid usage unaffected
+    property int indexOffset: 0
 
-    readonly property bool selected: tile.index === Launcher.selectedIndex
+    readonly property bool selected: tile.index + tile.indexOffset === Launcher.selectedIndex
 
     // fixed square so every tile (and its hover/selection highlight) is
     // exactly the same size, regardless of how long the app name is

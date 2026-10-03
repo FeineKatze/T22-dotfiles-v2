@@ -1,6 +1,7 @@
 module shell.launcher
 singleton Launcher 1.0 Launcher.qml
 singleton Bookmarks 1.0 Bookmarks.qml
+singleton Games 1.0 Games.qml
 LauncherWindow 1.0 LauncherWindow.qml
 AppTile 1.0 AppTile.qml
 PinnedTile 1.0 PinnedTile.qml
@@ -9,3 +10,4 @@ PowerTile 1.0 PowerTile.qml
 StashTile 1.0 StashTile.qml
 KillTile 1.0 KillTile.qml
 ModeTab 1.0 ModeTab.qml
+GameTile 1.0 GameTile.qml

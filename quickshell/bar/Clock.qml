@@ -69,7 +69,7 @@ Rectangle {
     // indices as filterColors - all on by default. Reassigned wholesale
     // (not mutated in place) since QML property bindings don't pick up
     // in-place array mutation
-    property var filterActive: [true, true, true, true, true, true]
+    property var filterActive: [false, false, true, true, true, true]
 
     function toggleFilter(i) {
         let arr = rec.filterActive.slice();
@@ -263,16 +263,23 @@ Rectangle {
         // resolve each source's own fallback color here (eg. a Feiertag
         // with no explicit color) - once merged there's no way to tell
         // which list an event came from, so this has to happen before that
+        // tagged with its source list so the Upcoming rows can tell a
+        // self-created appointment (right-click editable) apart from the
+        // read-only holiday lists
         let combined = [];
         if (Alarms.showAppointments)
-            combined = combined.concat(Alarms.appointments);
+            combined = combined.concat(Alarms.appointments.map(e => Object.assign({}, e, {
+                    source: "appointment"
+                })));
         if (Alarms.showGermanHolidays)
             combined = combined.concat(Alarms.germanHolidays.map(e => Object.assign({}, e, {
-                    color: e.color ?? rec.filterColors[0]
+                    color: e.color ?? rec.filterColors[0],
+                    source: "holiday"
                 })));
         if (Alarms.showGermanSchoolHolidays)
             combined = combined.concat(Alarms.germanSchoolHolidays.map(e => Object.assign({}, e, {
-                    color: e.color ?? rec.filterColors[1]
+                    color: e.color ?? rec.filterColors[1],
+                    source: "schoolHoliday"
                 })));
 
         // filter dots: an event whose color matches one of the 6 filter
@@ -614,6 +621,22 @@ Rectangle {
 
                                     Layout.fillWidth: true
                                     spacing: 1
+
+                                    // right-click-to-edit, self-created
+                                    // appointments only (not the read-only
+                                    // holiday lists) - bare-bones for now,
+                                    // just opens the Termine tab in "edit
+                                    // this one" mode; the actual editor UI
+                                    // comes with the appointments editor
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        acceptedButtons: eventBlock.modelData.source === "appointment" ? Qt.RightButton : Qt.NoButton
+                                        cursorShape: eventBlock.modelData.source === "appointment" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onClicked: {
+                                            Alarms.editAppointment(eventBlock.modelData.id);
+                                            rec.alarmsOpen = true;
+                                        }
+                                    }
 
                                     // thin separator between entries (none
                                     // above the first one)

@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import "calculator.js" as Calculator
 import "converter.js" as Converter
+import "fileicon.js" as FileIcon
 
 QtObject {
     id: root
@@ -181,10 +182,12 @@ QtObject {
         root.resetSelection();
     }
 
-    // "g <query>" / "b <query>" / "kill <query>" / "><command>" prefixes at
-    // the start of the search box - trigger automatically, no Tab needed.
-    // The space requirement on the word prefixes is what keeps eg. typing
-    // "gimp" from being mistaken for the google prefix.
+    // "g <query>" / "b <query>" / "kill <query>" / "s <query>" (Steam/Epic
+    // games) / "m <query>" (Prism/Minecraft instances) / "><command>"
+    // prefixes at the start of the search box - trigger automatically, no
+    // Tab needed. The space requirement on the word prefixes is what keeps
+    // eg. typing "gimp" from being mistaken for the google prefix, or
+    // "steam" from being mistaken for the "s " games prefix.
     readonly property string prefixCommand: {
         if (root.mode !== "search")
             return "";
@@ -194,6 +197,10 @@ QtObject {
             return "bookmarks";
         if (/^kill\s/i.test(root.query))
             return "kill";
+        if (/^s\s/i.test(root.query))
+            return "games";
+        if (/^m\s/i.test(root.query))
+            return "minecraft";
         if (root.query.startsWith(">"))
             return "shell";
         return "";
@@ -217,6 +224,24 @@ QtObject {
     // always the full 5x3 grid, regardless of query length
     readonly property var visibleBookmarks: root.filteredBookmarks.slice(0, root.columns * 3)
 
+    // "s <query>" - installed Steam/Epic games (Games.allGames); empty
+    // query shows everything, same as bookmarks above. Uncapped (unlike
+    // visibleBookmarks) - the grid scrolls instead, same as stash/kill
+    readonly property var visibleGames: {
+        if (root.prefixCommand !== "games" || root.prefixArg.length === 0)
+            return Games.allGames;
+        const q = root.prefixArg.toLowerCase();
+        return Games.allGames.filter(g => g.name.toLowerCase().includes(q));
+    }
+
+    // "m <query>" - Prism Launcher (Minecraft) instances, also uncapped/scrolling
+    readonly property var visibleMinecraftInstances: {
+        if (root.prefixCommand !== "minecraft" || root.prefixArg.length === 0)
+            return Games.minecraftInstances;
+        const q = root.prefixArg.toLowerCase();
+        return Games.minecraftInstances.filter(i => i.name.toLowerCase().includes(q));
+    }
+
     // whichever list the current mode's grid/selection acts on
     readonly property var currentList: {
         if (root.mode === "pinned")
@@ -229,7 +254,11 @@ QtObject {
             return root.visibleBookmarks;
         if (root.prefixCommand === "kill")
             return root.killWindows;
-        return root.activeApps;
+        if (root.prefixCommand === "games")
+            return root.visibleGames;
+        if (root.prefixCommand === "minecraft")
+            return root.visibleMinecraftInstances;
+        return root.activeApps.concat(root.matchingPinned);
     }
 
     // whether left/right should navigate the currently visible grid, or fall
@@ -250,7 +279,11 @@ QtObject {
             return root.visibleBookmarks.length > 0;
         if (root.prefixCommand === "kill")
             return root.killWindows.length > 0;
-        return root.calcResult.length === 0 && root.activeApps.length > 0;
+        if (root.prefixCommand === "games")
+            return root.visibleGames.length > 0;
+        if (root.prefixCommand === "minecraft")
+            return root.visibleMinecraftInstances.length > 0;
+        return root.calcResult.length === 0 && (root.activeApps.length > 0 || root.matchingPinned.length > 0);
     }
 
     function openGoogleSearch(query) {
@@ -260,6 +293,16 @@ QtObject {
 
     function openBookmark(bookmark) {
         Quickshell.execDetached(["xdg-open", bookmark.url]);
+        root.close();
+    }
+
+    function launchGame(entry) {
+        Games.launchGame(entry);
+        root.close();
+    }
+
+    function launchMinecraftInstance(entry) {
+        Games.launchMinecraftInstance(entry);
         root.close();
     }
 
@@ -351,6 +394,24 @@ QtObject {
     // pinned files (mostly), set externally (eg. via a yazi keybind that
     // appends to this same JSON file) - watchChanges picks up those edits live
     property var pinnedPaths: []
+
+    // pinned files/folders matching the current search - a search-mode
+    // assist, not a replacement for browsing everything in "pinned" mode, so
+    // it stays hidden on an empty query and only surfaces once you've
+    // actually typed something to find. Appended after activeApps in the
+    // grid (see LauncherWindow.qml); opens the same way pinned mode does
+    // (openPath), not app-launch
+    readonly property var matchingPinned: {
+        if (root.mode !== "search" || root.prefixCommand !== "" || root.query.length === 0)
+            return [];
+        const q = root.query.toLowerCase();
+        // basename only, not the full path - PinnedTile only ever shows
+        // the basename, and matching the full path let a query hit
+        // ancestor directory names (eg. "pro" matching "Projects") that
+        // never appear anywhere in what's actually shown, looking like an
+        // unrelated random result
+        return root.pinnedPaths.filter(p => FileIcon.baseName(p).toLowerCase().includes(q));
+    }
 
     readonly property string pinnedFilePath: Quickshell.env("HOME") + "/.local/share/quickshell/pinned.json"
 
@@ -553,6 +614,18 @@ QtObject {
                 root.openBookmark(bookmark);
             return;
         }
+        if (root.prefixCommand === "games") {
+            const game = root.visibleGames[root.selectedIndex];
+            if (game)
+                root.launchGame(game);
+            return;
+        }
+        if (root.prefixCommand === "minecraft") {
+            const instance = root.visibleMinecraftInstances[root.selectedIndex];
+            if (instance)
+                root.launchMinecraftInstance(instance);
+            return;
+        }
         if (root.mode === "power") {
             root.activatePower(root.powerOptions[root.selectedIndex]);
             return;
@@ -563,9 +636,15 @@ QtObject {
         }
         if (root.copyCalcResult())
             return;
-        const entry = root.activeApps[root.selectedIndex];
-        if (entry)
-            root.launch(entry);
+        if (root.selectedIndex < root.activeApps.length) {
+            const entry = root.activeApps[root.selectedIndex];
+            if (entry)
+                root.launch(entry);
+            return;
+        }
+        const pinnedPath = root.matchingPinned[root.selectedIndex - root.activeApps.length];
+        if (pinnedPath)
+            root.openPath(pinnedPath);
     }
 
     function open() {
@@ -578,6 +657,7 @@ QtObject {
         root.resetSelection();
         root.visible = true;
         Bookmarks.refresh();
+        Games.refresh();
     }
 
     function close() {

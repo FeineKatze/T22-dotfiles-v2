@@ -8,8 +8,13 @@ Rectangle {
 
     required property string path
     required property int index
+    // set when this tile's Repeater shares Launcher.selectedIndex with
+    // another one ahead of it in the grid (eg. app search results before
+    // these pinned matches) - 0 leaves the dedicated "pinned" mode grid
+    // unaffected
+    property int indexOffset: 0
 
-    readonly property bool selected: tile.index === Launcher.selectedIndex
+    readonly property bool selected: tile.index + tile.indexOffset === Launcher.selectedIndex
 
     // same fixed square as AppTile, so both grids line up the same way
     implicitWidth: 96

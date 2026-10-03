@@ -97,7 +97,7 @@ PanelWindow {
                         anchors.leftMargin: 8
                         anchors.topMargin: 8
                         anchors.bottomMargin: 8
-                        anchors.rightMargin: resultLabel.visible ? resultLabel.implicitWidth + 20 : 8
+                        anchors.rightMargin: resultLabel.visible ? resultLabel.implicitWidth + 20 : (iconStyleToggle.visible ? iconStyleToggle.implicitWidth + 20 : 8)
                         verticalAlignment: TextInput.AlignVCenter
                         focus: Launcher.visible
                         readOnly: Launcher.mode !== "search"
@@ -246,6 +246,32 @@ PanelWindow {
                             pixelSize: Theme.fontSize
                         }
                     }
+                    // icon-style toggle for the "s " (Steam/Epic) grid -
+                    // switches whether tiles lead with the big cover/header/
+                    // logo art (default) or the small 32x32 sidebar icon
+                    // upscaled - persisted, see Games.preferHashIcon
+                    Text {
+                        id: iconStyleToggle
+                        anchors.right: parent.right
+                        anchors.rightMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: Launcher.prefixCommand === "games"
+                        text: Games.preferHashIcon ? String.fromCodePoint(0xf0c8f) : String.fromCodePoint(0xf0c8e)
+                        color: Theme.textColor
+                        opacity: 0.6
+
+                        font {
+                            family: Theme.fontFamily
+                            pixelSize: Theme.fontSize
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -4
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Games.toggleIconPreference()
+                        }
+                    }
                     // "Pinned" header, shown in place of the search text while in pinned mode
                     Text {
                         anchors.fill: searchInput
@@ -378,6 +404,21 @@ PanelWindow {
                                 entry: modelData
                             }
                         }
+
+                        // pinned files/folders matching the search - hidden
+                        // on an empty query (see Launcher.matchingPinned),
+                        // appended after the app tiles and sharing the same
+                        // selectedIndex space via indexOffset
+                        Repeater {
+                            model: Launcher.mode === "search" && Launcher.prefixCommand === "" ? Launcher.matchingPinned : []
+
+                            PinnedTile {
+                                required property var modelData
+
+                                path: modelData
+                                indexOffset: Launcher.activeApps.length
+                            }
+                        }
                     }
                 }
                 GridLayout {
@@ -394,6 +435,119 @@ PanelWindow {
                             required property var modelData
 
                             entry: modelData
+                        }
+                    }
+                }
+                // "s <query>" - installed Steam/Epic games - scrolls, same
+                // 5-wide/up-to-3-rows-then-scroll shape as stash/kill below
+                Flickable {
+                    id: gamesFlick
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: Launcher.mode === "search" && Launcher.prefixCommand === "games"
+                    implicitWidth: gamesGrid.implicitWidth
+                    implicitHeight: Math.min(gamesGrid.implicitHeight, 3 * 96 + 2 * 4)
+                    contentWidth: gamesGrid.implicitWidth
+                    contentHeight: gamesGrid.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    function ensureSelectedVisible() {
+                        if (Launcher.prefixCommand !== "games")
+                            return;
+
+                        const row = Math.floor(Launcher.selectedIndex / Launcher.columns);
+                        const rowTop = row * 100;
+                        const rowBottom = rowTop + 96;
+                        if (rowTop < gamesFlick.contentY)
+                            gamesFlick.contentY = rowTop;
+                        else if (rowBottom > gamesFlick.contentY + gamesFlick.height)
+                            gamesFlick.contentY = rowBottom - gamesFlick.height;
+                    }
+
+                    Connections {
+                        target: Launcher
+
+                        function onSelectedIndexChanged() {
+                            gamesFlick.ensureSelectedVisible();
+                        }
+                        function onPrefixCommandChanged() {
+                            if (Launcher.prefixCommand === "games")
+                                gamesFlick.contentY = 0;
+                        }
+                    }
+                    GridLayout {
+                        id: gamesGrid
+                        columns: Launcher.columns
+                        rowSpacing: 4
+                        columnSpacing: 4
+
+                        Repeater {
+                            model: Launcher.mode === "search" && Launcher.prefixCommand === "games" ? Launcher.visibleGames : []
+
+                            GameTile {
+                                required property var modelData
+
+                                entry: modelData
+                                glyph: modelData.source === "steam" ? String.fromCodePoint(0xf04d3) : String.fromCodePoint(0xf0297)
+                                iconCandidates: modelData.iconCandidates
+                                activateFn: Launcher.launchGame
+                            }
+                        }
+                    }
+                }
+                // "m <query>" - Prism Launcher (Minecraft) instances - scrolls too
+                Flickable {
+                    id: minecraftFlick
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: Launcher.mode === "search" && Launcher.prefixCommand === "minecraft"
+                    implicitWidth: minecraftGrid.implicitWidth
+                    implicitHeight: Math.min(minecraftGrid.implicitHeight, 3 * 96 + 2 * 4)
+                    contentWidth: minecraftGrid.implicitWidth
+                    contentHeight: minecraftGrid.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    function ensureSelectedVisible() {
+                        if (Launcher.prefixCommand !== "minecraft")
+                            return;
+
+                        const row = Math.floor(Launcher.selectedIndex / Launcher.columns);
+                        const rowTop = row * 100;
+                        const rowBottom = rowTop + 96;
+                        if (rowTop < minecraftFlick.contentY)
+                            minecraftFlick.contentY = rowTop;
+                        else if (rowBottom > minecraftFlick.contentY + minecraftFlick.height)
+                            minecraftFlick.contentY = rowBottom - minecraftFlick.height;
+                    }
+
+                    Connections {
+                        target: Launcher
+
+                        function onSelectedIndexChanged() {
+                            minecraftFlick.ensureSelectedVisible();
+                        }
+                        function onPrefixCommandChanged() {
+                            if (Launcher.prefixCommand === "minecraft")
+                                minecraftFlick.contentY = 0;
+                        }
+                    }
+                    GridLayout {
+                        id: minecraftGrid
+                        columns: Launcher.columns
+                        rowSpacing: 4
+                        columnSpacing: 4
+
+                        Repeater {
+                            model: Launcher.mode === "search" && Launcher.prefixCommand === "minecraft" ? Launcher.visibleMinecraftInstances : []
+
+                            GameTile {
+                                required property var modelData
+
+                                entry: modelData
+                                glyph: String.fromCodePoint(0xf0373)
+                                iconCandidates: modelData.icon.length > 0 ? ["file://" + modelData.icon] : []
+                                activateFn: Launcher.launchMinecraftInstance
+                            }
                         }
                     }
                 }

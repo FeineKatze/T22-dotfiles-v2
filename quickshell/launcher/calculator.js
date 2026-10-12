@@ -177,9 +177,10 @@ function formatNumber(n) {
     if (Number.isInteger(n))
         return n.toString();
 
-    let s = n.toFixed(10);
-    s = s.replace(/0+$/, "").replace(/\.$/, "");
-    return s;
+    // 12 significant digits, not fixed decimals - toFixed(10) printed the
+    // binary representation error of big values (8941698415/1000 gave
+    // 8941698.4149999991)
+    return String(parseFloat(n.toPrecision(12)));
 }
 
 // "1:30 + 2:00 - 0:45" style duration arithmetic - a chain of H:MM (or

@@ -15,11 +15,34 @@ PanelWindow {
     // input from the fullscreen app; picking a monitor with nothing
     // fullscreen avoids both
     readonly property var monitorOrder: ["DP-1", "DP-2", "HDMI-A-1"]
+
+    // some games grab/capture the pointer for mouselook even when run
+    // windowed (not Hyprland-fullscreen) - Minecraft is the known case, via
+    // Prism. Hyprland's hasFullscreen check above doesn't catch these since
+    // they're genuinely just a normal window, so the same layer-shell
+    // click-stealing bug the comment above describes still happens. Matched
+    // by window class/title (same lastIpcObject.class idiom as
+    // launcher/Launcher.qml's killWindows/stashSlots), same blacklist-array
+    // style as launcher/Games.qml's blacklistedNamePatterns - add more
+    // regexes here as other games turn out to need it
+    readonly property var mouseGrabAppPatterns: [/^Minecraft\*?\b/i]
+    readonly property var mouseGrabMonitorNames: {
+        const names = new Set();
+        for (const t of Hyprland.toplevels.values) {
+            const cls = (t.lastIpcObject && t.lastIpcObject.class) ? t.lastIpcObject.class : "";
+            const matches = popupWindow.mouseGrabAppPatterns.some(re => re.test(cls) || re.test(t.title));
+            if (matches && t.workspace && t.workspace.monitor)
+                names.add(t.workspace.monitor.name);
+        }
+        return names;
+    }
+
     readonly property string targetScreenName: {
         for (const name of popupWindow.monitorOrder) {
             const mon = Hyprland.monitors.values.find(m => m.name === name);
             const hasFullscreen = mon && mon.activeWorkspace && mon.activeWorkspace.hasFullscreen;
-            if (mon && !hasFullscreen)
+            const hasMouseGrabApp = popupWindow.mouseGrabMonitorNames.has(name);
+            if (mon && !hasFullscreen && !hasMouseGrabApp)
                 return name;
         }
         return popupWindow.monitorOrder[0];

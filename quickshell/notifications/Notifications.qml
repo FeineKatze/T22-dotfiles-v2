@@ -9,6 +9,10 @@ QtObject {
     property bool muted: false
     property bool centerVisible: false
 
+    // logs every incoming notification's app, desktop entry and actions to
+    // the Quickshell log (qs log) - toggled via `qs ipc call notifications debug`
+    property bool debugLogging: false
+
     property var popupEntries: []
     property var historyEntries: []
 
@@ -36,6 +40,18 @@ QtObject {
         root.popupEntries = [entry, ...root.popupEntries];
     }
 
+    // extra popup buttons added by rule, on top of nothing the app sent
+    // itself. Each rule: { match: entry => bool, label: string,
+    // run: entry => void }, eg.
+    //   { match: e => e.appName === "Discord", label: "Open",
+    //     run: e => Quickshell.execDetached(["vesktop"]) }
+    // Empty for now
+    readonly property var buttonTriggers: []
+
+    function buttonsFor(entry) {
+        return root.buttonTriggers.filter(t => t.match(entry));
+    }
+
     function makeEntry(notification) {
         return {
             id: notification.id,
@@ -58,6 +74,11 @@ QtObject {
 
         onNotification: notification => {
             notification.tracked = true;
+
+            if (root.debugLogging) {
+                const acts = notification.actions.map(a => a.identifier + "=" + a.text);
+                console.log("[notif]", "app=" + notification.appName, "desktopEntry=" + notification.desktopEntry, "summary=" + notification.summary, "actions=[" + acts.join(", ") + "]");
+            }
 
             const entry = root.makeEntry(notification);
             root.historyEntries = [entry, ...root.historyEntries].slice(0, root.historyLimit);

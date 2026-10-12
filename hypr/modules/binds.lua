@@ -170,7 +170,7 @@ hl.bind(mainMod .. " + ALT + S", function()
 	stash.shift()
 end) -- oldest first (FIFO)
 
-hl.bind("SUPER + code:127", hl.dsp.exec_cmd("hyprpicker"), { locked = true })
+hl.bind("SUPER + code:127", hl.dsp.exec_cmd("hyprpicker -a"), { locked = true })
 
 local MAX_ZOOM = 3
 local MIN_ZOOM = 1

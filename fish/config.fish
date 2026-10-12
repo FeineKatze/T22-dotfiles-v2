@@ -42,4 +42,4 @@ end
 function loc
     locate -i "$argv" | grep -i --color=always "$argv"
 end
-abbr --add updb sudo updatedb --add-single-prunepath "/run/media/christopher/Windows/Program Files" --add-single-prunepath "/run/media/christopher/Windows/Program Files (x86)" --add-single-prunepath "/run/media/christopher/Windows/Users/Christopher/Epic Games" -v
+abbr --add updb 'sudo updatedb --add-single-prunepath "/run/media/christopher/Windows/Program Files" --add-single-prunepath "/run/media/christopher/Windows/Program Files (x86)" --add-single-prunepath "/run/media/christopher/Windows/Users/Christopher/Epic Games" --add-single-prunepath "/run/media/christopher/Transcend/System Volume Information" -v'

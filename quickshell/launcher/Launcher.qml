@@ -52,7 +52,12 @@ QtObject {
         {
             label: "Restart QS",
             glyph: "↻",
-            command: ["bash", "-c", "qs kill && qs & disown"]
+            // kill every running instance by both binary names ("qs" is
+            // just the short alias of "quickshell"), not just `qs kill`'s
+            // one matching instance - a leftover second shell would mean a
+            // duplicate launcher/bar. Waits until they're really gone
+            // (max ~5s) before starting the fresh one
+            command: ["bash", "-c", "pkill -x qs; pkill -x quickshell; for i in $(seq 50); do pgrep -x qs >/dev/null || pgrep -x quickshell >/dev/null || break; sleep 0.1; done; setsid qs >/dev/null 2>&1 &"]
         },
         {
             label: "Restart",

@@ -20,6 +20,10 @@ ShellRoot {
         function toggle(): void {
             Notifications.toggleCenter();
         }
+        function debug(): string {
+            Notifications.debugLogging = !Notifications.debugLogging;
+            return Notifications.debugLogging ? "notification logging on" : "notification logging off";
+        }
     }
 
     IpcHandler {

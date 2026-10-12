@@ -26,6 +26,8 @@ require("modules.xwayland")
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
+hl.env("XCURSOR_THEME", "Adwaita")
+hl.env("HYPRCURSOR_THEME", "Adwaita")
 
 hl.env("GDK_BACKEND", "wayland,x11,*")
 hl.env("QT_QPA_PLATFORM", "wayland;xcb")
@@ -50,6 +52,9 @@ hl.env("XDG_SCREENSHOTS_DIR", "/home/christopher/Pictures/Screenshots")
 hl.env("HYPRSHOT_DIR", "/home/christopher/Pictures/Screenshots")
 
 hl.env("WLR_NO_HARDWARE_CURSOR", "1")
+
+hl.env("EDITOR", "nvim")
+hl.env("VISUAL", "nvim")
 
 -----------------------
 ----- PERMISSIONS -----

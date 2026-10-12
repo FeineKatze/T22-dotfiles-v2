@@ -1,5 +1,6 @@
 # This file contains fish universal variable definitions.
 # VERSION: 3.0
+SETUVAR --export EDITOR:nvim
 SETUVAR --export LIBVIRT_DEFAULT_URI:qemu\x3a///system
 SETUVAR --export SSH_AGENT_PID:295881
 SETUVAR --export SSH_AUTH_SOCK:/home/christopher/\x2ekeychain/g_fxSV4X\x2es

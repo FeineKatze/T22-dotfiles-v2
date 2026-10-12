@@ -125,12 +125,23 @@ PanelWindow {
 
             // --- text mode: plain multi-line editor, normal controls ---
             Flickable {
+                id: textFlick
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: Notes.mode === "text"
                 clip: true
                 contentWidth: width
                 contentHeight: Math.max(height, textEdit.implicitHeight)
+
+                // keep the caret in view - TextEdit inside a Flickable
+                // doesn't scroll on its own
+                function ensureCaretVisible() {
+                    const r = textEdit.cursorRectangle;
+                    if (r.y < textFlick.contentY)
+                        textFlick.contentY = r.y;
+                    else if (r.y + r.height > textFlick.contentY + textFlick.height)
+                        textFlick.contentY = r.y + r.height - textFlick.height;
+                }
 
                 TextEdit {
                     id: textEdit
@@ -150,6 +161,8 @@ PanelWindow {
                         if (text !== Notes.textNotes[Notes.activeTextIndex])
                             Notes.setTextContent(text);
                     }
+
+                    onCursorRectangleChanged: textFlick.ensureCaretVisible()
 
                     // re-sync when the active slot's content changes from
                     // outside this widget's own typing (switching slots,
@@ -173,7 +186,20 @@ PanelWindow {
                     }
 
                     Keys.onPressed: event => {
-                        if (Notes.handleKey(event.key, event.modifiers))
+                        if (Notes.handleKey(event.key, event.modifiers)) {
+                            event.accepted = true;
+                            return;
+                        }
+                        // plain Left/Right stop at the start/end of a line
+                        // instead of wrapping to the neighbouring line -
+                        // only Up/Down change lines. Shift/Ctrl variants
+                        // (selecting, word jumps) keep their normal behavior
+                        if (event.modifiers !== Qt.NoModifier)
+                            return;
+                        const pos = textEdit.cursorPosition;
+                        if (event.key === Qt.Key_Left && (pos === 0 || textEdit.text.charAt(pos - 1) === "\n"))
+                            event.accepted = true;
+                        else if (event.key === Qt.Key_Right && (pos === textEdit.text.length || textEdit.text.charAt(pos) === "\n"))
                             event.accepted = true;
                     }
                 }
@@ -248,6 +274,7 @@ PanelWindow {
                             target: Notes
                             function onPendingFocusIndexChanged() {
                                 if (Notes.pendingFocusIndex === itemRow.index) {
+                                    checklistView.positionViewAtIndex(itemRow.index, ListView.Contain);
                                     itemInput.forceActiveFocus();
                                     Notes.pendingFocusIndex = -1;
                                 }
